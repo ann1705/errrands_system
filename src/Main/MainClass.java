@@ -9,25 +9,24 @@ public class MainClass {
     public static void viewUsers() {
         String Query = "SELECT * FROM tbl_users";
 
-        String[] userHeaders = {"ID", "Name", "Email", "Type", "Status"};
-        String[] userColumns = {"u_id", "u_name", "u_email", "u_type", "u_status"};
+        String[] userHeaders = {"ID", "First Name","Last Name", "Email", "Type", "Status"};
+        String[] userColumns = {"u_id", "u_first_name","u_last_name", "u_email", "u_type", "u_status"};
         config conf = new config();
         conf.viewUsers(Query, userHeaders, userColumns);
     }
 
     public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
         config conf = new config();
-        conf.connectDB();
+        config.connectDB();
 
-       
+        
         final String DEVELOPER_EMAIL = "developer";
         final String DEVELOPER_PASSWORD = "1234";
 
         int choice = 0;
         char cont = 'Y'; 
         
-        
-        Scanner sc = new Scanner(System.in); 
 
         do {
             try { 
@@ -67,6 +66,7 @@ public class MainClass {
                                 java.util.Map<String, Object> user = result.get(0);
                                 String stat = user.get("u_status").toString();
                                 String type = user.get("u_type").toString();
+                                int userId = Integer.parseInt(user.get("u_id").toString()); // GET USER ID
                                 
                                 if (stat.equals("Pending")) {
                                     System.out.println("Account is Pending, Contact the Admin!");
@@ -77,10 +77,10 @@ public class MainClass {
                                         Admin admin = new Admin();
                                         admin.Admin(); 
                                     } else if (type.equals("Service Provider")) {
-                                        ServiceProvider service = new ServiceProvider();
+                                        ServiceProvider service = new ServiceProvider(userId);
                                         service.ServiceProvider(); 
                                     } else if (type.equals("Customer")) {
-                                        Customer customer = new Customer();
+                                        Customer customer = new Customer(userId); // PASS USER ID HERE
                                         customer.Customer(); 
                                     }
                                 }
@@ -90,9 +90,12 @@ public class MainClass {
 
                     case 2:
                         
-                        System.out.print("Enter user name: ");
-                        String name = sc.nextLine(); 
+                        System.out.print("Enter First name: ");
+                        String fname = sc.nextLine();
                         
+                        System.out.print("Enter Last name: ");
+                        String lname = sc.nextLine(); 
+     
                         System.out.print("Enter user email: ");
                         String em = sc.next();
                         sc.nextLine();
@@ -154,8 +157,8 @@ public class MainClass {
 
                         String hashedPass = conf.hashPassword(ps);
 
-                        String sql = "INSERT INTO tbl_users(u_name, u_email, u_type, u_status, u_pass, u_phone, u_address) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                        conf.addRecord(sql, name, em, tp, status, hashedPass, ph, add); 
+                        String sql = "INSERT INTO tbl_users(u_first_name, u_last_name, u_email, u_type, u_status, u_pass, u_phone, u_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                        conf.addRecord(sql, fname, lname, em, tp, status, hashedPass, ph, add); 
 
                         System.out.println("Registration successful!");
                         System.out.println(tp + " account created. Please wait for admin approval.");

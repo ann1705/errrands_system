@@ -12,9 +12,9 @@ public class SuperAdmin {
     
     public static void viewUsers() {
         String Query = "SELECT * FROM tbl_users";
-        
-        String[] userHeaders = {"ID", "Name", "Email", "Type", "Status"};
-        String[] userColumns = {"u_id", "u_name", "u_email", "u_type", "u_status"};
+
+        String[] userHeaders = {"ID", "First Name","Last Name", "Email", "Type", "Status"};
+        String[] userColumns = {"u_id", "u_first_name","u_last_name", "u_email", "u_type", "u_status"};
         config conf = new config();
         conf.viewUsers(Query, userHeaders, userColumns);
     }
@@ -56,9 +56,14 @@ public class SuperAdmin {
                             
                             switch(devChoice){
                                 case 1:
-                                    System.out.print("Enter Admin name: ");
+                                    System.out.print("Enter Admin First Name: ");
                                     sc.nextLine(); // consume newline
-                                    String adminName = sc.nextLine();
+                                    String adminFname = sc.next();
+                                    
+                                    System.out.print("Enter Admin Last Name: ");
+                                    
+                                    String adminLname = sc.next();
+   
                                     System.out.print("Enter Admin email: ");
                                     String adminEmail = sc.next();
                                     
@@ -71,8 +76,8 @@ public class SuperAdmin {
                                         String adminPass = sc.next();
                                         String hashpass = conf.hashPassword(adminPass);
                                         
-                                        String adminSQL = "INSERT INTO tbl_users(u_name, u_email, u_type, u_status, u_pass) VALUES (?, ?, ?, ?, ?)";
-                                        conf.addRecord(adminSQL, adminName, adminEmail, "Admin", "Approved", hashpass);
+                                        String adminSQL = "INSERT INTO tbl_users(u_first_name,u_last_name, u_email, u_type, u_status, u_pass) VALUES (?, ?, ?, ?, ?,?)";
+                                        conf.addRecord(adminSQL, adminFname, adminLname, adminEmail, "Admin", "Approved", hashpass);
                                         System.out.println("Admin account created successfully!");
                                     } else {
                                         System.out.println("Email already exists!");

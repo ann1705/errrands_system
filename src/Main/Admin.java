@@ -13,9 +13,9 @@ public class Admin {
     
     public static void viewUsers() {
         String Query = "SELECT * FROM tbl_users";
-        
-        String[] userHeaders = {"ID", "Name", "Email", "Type", "Status"};
-        String[] userColumns = {"u_id", "u_name", "u_email", "u_type", "u_status"};
+
+        String[] userHeaders = {"ID", "First Name","Last Name", "Email", "Type", "Status"};
+        String[] userColumns = {"u_id", "u_first_name","u_last_name", "u_email", "u_type", "u_status"};
         config conf = new config();
         conf.viewUsers(Query, userHeaders, userColumns);
     }
@@ -51,8 +51,8 @@ public class Admin {
 
             case 2:
                 String pendingQuery = "SELECT * FROM tbl_users WHERE u_type IN ('Customer', 'Service Provider') AND u_status = 'Pending'";
-                String[] pendingHeaders = {"ID", "Name", "Email", "Type", "Status"};
-                String[] pendingColumns = {"u_id", "u_name", "u_email", "u_type", "u_status"};
+                String[] pendingHeaders = {"ID", "First Name","Last Name", "Email", "Type", "Status"};
+                String[] pendingColumns = {"u_id", "u_first_name","u_last_name", "u_email", "u_type", "u_status"};
                 conf.viewUsers(pendingQuery, pendingHeaders, pendingColumns);
 
                 System.out.print("Enter ID to Approve: ");
