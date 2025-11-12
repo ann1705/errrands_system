@@ -8,7 +8,6 @@ public class MainClass {
 
     public static void viewUsers() {
         String Query = "SELECT * FROM tbl_users";
-
         String[] userHeaders = {"ID", "First Name","Last Name", "Email", "Type", "Status"};
         String[] userColumns = {"u_id", "u_first_name","u_last_name", "u_email", "u_type", "u_status"};
         config conf = new config();
@@ -20,13 +19,11 @@ public class MainClass {
         config conf = new config();
         config.connectDB();
 
-        
         final String DEVELOPER_EMAIL = "developer";
         final String DEVELOPER_PASSWORD = "1234";
 
         int choice = 0;
         char cont = 'Y'; 
-        
 
         do {
             try { 
@@ -40,23 +37,20 @@ public class MainClass {
                 sc.nextLine(); 
 
                 switch (choice) {
-
                     case 1:
                         System.out.print("Enter email: ");
                         String email = sc.nextLine(); 
                         System.out.print("Enter Password: ");
                         String pass = sc.nextLine();
                         
-                        
+                        // Check if developer/super admin login
                         if (email.equals(DEVELOPER_EMAIL) && pass.equals(DEVELOPER_PASSWORD)) {
-                           
-                            SuperAdmin superadmin = new SuperAdmin();
-                            superadmin.SuperAdmin();
-                            
-                        
+                            System.out.println("LOGIN SUCCESS! Welcome Super Admin!");
+                            SuperAdmin admin = new SuperAdmin(0); // Use 0 or -1 for super admin
+                            admin.showDashboard();
                         } else { 
+                            // Regular user login
                             String hashpass = conf.hashPassword(pass); 
-                            
                             String qry = "SELECT * FROM tbl_users WHERE u_email = ? AND u_pass = ?";
                             java.util.List<java.util.Map<String, Object>> result = conf.fetchRecords(qry, email, hashpass);
 
@@ -66,7 +60,7 @@ public class MainClass {
                                 java.util.Map<String, Object> user = result.get(0);
                                 String stat = user.get("u_status").toString();
                                 String type = user.get("u_type").toString();
-                                int userId = Integer.parseInt(user.get("u_id").toString()); // GET USER ID
+                                int userId = Integer.parseInt(user.get("u_id").toString());
                                 
                                 if (stat.equals("Pending")) {
                                     System.out.println("Account is Pending, Contact the Admin!");
@@ -80,7 +74,7 @@ public class MainClass {
                                         ServiceProvider service = new ServiceProvider(userId);
                                         service.ServiceProvider(); 
                                     } else if (type.equals("Customer")) {
-                                        Customer customer = new Customer(userId); // PASS USER ID HERE
+                                        Customer customer = new Customer(userId);
                                         customer.Customer(); 
                                     }
                                 }
@@ -89,7 +83,6 @@ public class MainClass {
                         break;
 
                     case 2:
-                        
                         System.out.print("Enter First name: ");
                         String fname = sc.nextLine();
                         
@@ -97,10 +90,8 @@ public class MainClass {
                         String lname = sc.nextLine(); 
      
                         System.out.print("Enter user email: ");
-                        String em = sc.next();
-                        sc.nextLine();
+                        String em = sc.nextLine();
                         
-                       
                         int emailAttempts = 0;
                         boolean validEmail = false;
 
@@ -115,8 +106,7 @@ public class MainClass {
                                 emailAttempts++;
                                 if (emailAttempts < 3) {
                                     System.out.print("Email already exists, Enter other Email (" + (3 - emailAttempts) + " attempts left): ");
-                                    em = sc.next();
-                                    sc.nextLine(); 
+                                    em = sc.nextLine();
                                 }
                             }
                         }
@@ -127,7 +117,6 @@ public class MainClass {
                         }
 
                         System.out.print("Enter user Type (1 - Service Provider/2 - Customer): ");
-                        
                         int typeChoice = sc.nextInt();
                         sc.nextLine(); 
 
@@ -175,28 +164,23 @@ public class MainClass {
                 }
 
             } catch (InputMismatchException e) {
-                
                 System.out.println("Invalid input. Please enter a number (1, 2, or 3).");
                 sc.nextLine();
                 choice = 0; 
             } catch (Exception e) {
-                
                 System.out.println("An unexpected error occurred: " + e.getMessage());
-                
+                e.printStackTrace(); // This will help you see the full error
             }
-
 
             if (choice != 3) {
                 System.out.print("\nDo you want to continue? (Y/N): ");
-                
-                String continueInput = sc.next();
+                String continueInput = sc.nextLine();
                 cont = continueInput.toUpperCase().charAt(0); 
             } else {
                 cont = 'N'; 
             }
 
         } while (cont == 'Y');
-        
         
         System.out.println("Thank you! Program ended.");
         sc.close();

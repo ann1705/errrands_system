@@ -5,9 +5,8 @@ import java.util.Scanner;
 public class ServiceProvider {
     Scanner sc = new Scanner(System.in);
     config conf = new config();
-    private int loggedInUserId; // Store the logged-in service provider's ID
+    private int loggedInUserId;
     
-    // Constructor to set the user ID when they log in
     public ServiceProvider(int userId) {
         this.loggedInUserId = userId;
     }
@@ -16,29 +15,28 @@ public class ServiceProvider {
     public void viewRequest() {
         System.out.println("\n=== CUSTOMER REQUESTS ===");
         
-        // View all pending requests from customers
         String viewQuery = "SELECT r.r_id, u.u_first_name, u.u_last_name, s.s_services, r.r_details, r.r_date, r.r_time, r.r_location, s.s_price, r.r_status " +
                           "FROM tbl_request r " +
                           "INNER JOIN tbl_services s ON r.s_id = s.s_id " +
-                          "INNER JOIN tbl_Users u ON r.u_id = u.u_id " +
+                          "INNER JOIN tbl_users u ON r.u_id = u.u_id " +
                           "WHERE r.r_status = 'Pending'";
         String[] requestHeaders = {"Request ID", "First Name", "Last Name", "Service", "Details", "Date", "Time", "Location", "Price", "Status"};
         String[] requestColumns = {"r_id", "u_first_name", "u_last_name", "s_services", "r_details", "r_date", "r_time", "r_location", "s_price", "r_status"};
-        conf.viewServices(viewQuery, requestHeaders, requestColumns);
+        conf.viewRequest(viewQuery, requestHeaders, requestColumns);
     }
     
-    // View accepted requests (all accepted requests, not filtered by provider)
+    // View accepted requests
     private void viewAcceptedRequests() {
         System.out.println("\n=== ACCEPTED REQUESTS ===");
         
         String viewQuery = "SELECT r.r_id, u.u_first_name, u.u_last_name, s.s_services, r.r_details, r.r_date, r.r_time, r.r_location, s.s_price, r.r_status " +
                           "FROM tbl_request r " +
                           "INNER JOIN tbl_services s ON r.s_id = s.s_id " +
-                          "INNER JOIN tbl_Users u ON r.u_id = u.u_id " +
+                          "INNER JOIN tbl_users u ON r.u_id = u.u_id " +
                           "WHERE r.r_status = 'Accepted'";
         String[] requestHeaders = {"Request ID", "First Name", "Last Name", "Service", "Details", "Date", "Time", "Location", "Price", "Status"};
         String[] requestColumns = {"r_id", "u_first_name", "u_last_name", "s_services", "r_details", "r_date", "r_time", "r_location", "s_price", "r_status"};
-        conf.viewServices(viewQuery, requestHeaders, requestColumns);
+        conf.viewRequest(viewQuery, requestHeaders, requestColumns);
     }
     
     // View request history (completed and cancelled requests)
@@ -48,11 +46,11 @@ public class ServiceProvider {
         String viewQuery = "SELECT r.r_id, u.u_first_name, u.u_last_name, s.s_services, r.r_details, r.r_date, r.r_time, r.r_location, s.s_price, r.r_status " +
                           "FROM tbl_request r " +
                           "INNER JOIN tbl_services s ON r.s_id = s.s_id " +
-                          "INNER JOIN tbl_Users u ON r.u_id = u.u_id " +
+                          "INNER JOIN tbl_users u ON r.u_id = u.u_id " +
                           "WHERE r.r_status = 'Completed' OR r.r_status = 'Cancelled'";
         String[] requestHeaders = {"Request ID", "First Name", "Last Name", "Service", "Details", "Date", "Time", "Location", "Price", "Status"};
         String[] requestColumns = {"r_id", "u_first_name", "u_last_name", "s_services", "r_details", "r_date", "r_time", "r_location", "s_price", "r_status"};
-        conf.viewServices(viewQuery, requestHeaders, requestColumns);
+        conf.viewRequest(viewQuery, requestHeaders, requestColumns);
     }
     
     // Validate if request exists and is in correct status
@@ -78,7 +76,9 @@ public class ServiceProvider {
             System.out.println("5. Delete Request History");
             System.out.println("6. Logout");
             System.out.print("Enter Choice: ");
+            
             int provResp = sc.nextInt();
+            sc.nextLine(); // Consume newline
             
             switch(provResp){
                 case 1:
@@ -87,12 +87,14 @@ public class ServiceProvider {
                     
                 case 2:
                     System.out.println("\n=== ACCEPT REQUEST ===");
-                    viewRequest(); // Show pending requests
+                    viewRequest();
                     
                     System.out.print("\nEnter Request ID to Accept (0 to go back): ");
                     int reqId = sc.nextInt();
+                    sc.nextLine(); // Consume newline
                     
                     if(reqId == 0) {
+                        System.out.println("Cancelled.");
                         break;
                     }
                     
@@ -103,12 +105,11 @@ public class ServiceProvider {
                     }
                     
                     System.out.print("Confirm acceptance of Request ID " + reqId + "? (Y/N): ");
-                    String acceptConfirm = sc.next();
+                    String acceptConfirm = sc.nextLine();
                     
                     if(acceptConfirm.equalsIgnoreCase("Y")) {
-                        // Update request status to Accepted
-                        String updateQuery = "UPDATE tbl_request SET r_status = 'Accepted' WHERE r_id = ?";
-                        conf.updateRequest(updateQuery, reqId);
+                        String updateQuery = "UPDATE tbl_request SET r_status = ? WHERE r_id = ?";
+                        conf.updateRequest(updateQuery, "Accepted", reqId);
                         System.out.println("✓ Request accepted successfully!");
                     } else {
                         System.out.println("Request acceptance cancelled.");
@@ -117,12 +118,14 @@ public class ServiceProvider {
                     
                 case 3:
                     System.out.println("\n=== MARK REQUEST COMPLETED ===");
-                    viewAcceptedRequests(); // Show accepted requests
+                    viewAcceptedRequests();
                     
                     System.out.print("\nEnter Request ID to Mark as Complete (0 to go back): ");
                     int comId = sc.nextInt();
+                    sc.nextLine(); // Consume newline
                     
                     if(comId == 0) {
+                        System.out.println("Cancelled.");
                         break;
                     }
                     
@@ -133,11 +136,11 @@ public class ServiceProvider {
                     }
                     
                     System.out.print("Confirm completion of Request ID " + comId + "? (Y/N): ");
-                    String completeConfirm = sc.next();
+                    String completeConfirm = sc.nextLine();
                     
                     if(completeConfirm.equalsIgnoreCase("Y")) {
-                        String updateQuery = "UPDATE tbl_request SET r_status = 'Completed' WHERE r_id = ?";
-                        conf.updateRequest(updateQuery, comId);
+                        String updateQuery = "UPDATE tbl_request SET r_status = ? WHERE r_id = ?";
+                        conf.updateRequest(updateQuery, "Completed", comId);
                         System.out.println("✓ Request marked as completed!");
                     } else {
                         System.out.println("Completion cancelled.");
@@ -150,12 +153,14 @@ public class ServiceProvider {
                     
                 case 5:
                     System.out.println("\n=== DELETE REQUEST HISTORY ===");
-                    viewRequestHistory(); // Show completed/cancelled requests
+                    viewRequestHistory();
                     
                     System.out.print("\nEnter Request ID to Delete (0 to go back): ");
                     int hisId = sc.nextInt();
+                    sc.nextLine(); // Consume newline
                     
                     if(hisId == 0) {
+                        System.out.println("Cancelled.");
                         break;
                     }
                     
@@ -169,11 +174,11 @@ public class ServiceProvider {
                     }
                     
                     System.out.print("Are you sure you want to delete Request ID " + hisId + "? (Y/N): ");
-                    String deleteConfirm = sc.next();
+                    String deleteConfirm = sc.nextLine();
                     
                     if(deleteConfirm.equalsIgnoreCase("Y")) {
                         String deleteQuery = "DELETE FROM tbl_request WHERE r_id = ?";
-                        conf.updateRequest(deleteQuery, hisId);
+                        conf.deleteRequest(deleteQuery, hisId);
                         System.out.println("✓ Request deleted successfully!");
                     } else {
                         System.out.println("Deletion cancelled.");
@@ -187,6 +192,7 @@ public class ServiceProvider {
                     
                 default:
                     System.out.println("Invalid Choice.");
+                    break;
             }
         }
     }

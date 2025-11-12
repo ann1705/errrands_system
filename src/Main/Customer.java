@@ -5,9 +5,8 @@ import java.util.Scanner;
 public class Customer {
     Scanner sc = new Scanner(System.in);
     config conf = new config();
-    private int loggedInUserId; // Store the logged-in user's ID
+    private int loggedInUserId;
     
-    // Constructor to set the user ID when they log in
     public Customer(int userId) {
         this.loggedInUserId = userId;
     }
@@ -20,7 +19,6 @@ public class Customer {
         conf.viewServices(Query, userHeaders, userColumns);
     }
     
-    // Method to validate if service ID exists - FIXED VERSION
     private boolean isValidServiceId(int serviceId) {
         String query = "SELECT * FROM tbl_services WHERE s_id = ?";
         try {
@@ -32,10 +30,8 @@ public class Customer {
         }
     }
     
-    // Fixed viewRequest as a proper instance method
     public void viewRequest() {
         System.out.println("\n=== MY ERRANDS ===");
-        // View only the logged-in user's requests with all details
         String viewQuery = "SELECT r.r_id, s.s_services, r.r_details, r.r_date, r.r_time, r.r_location, s.s_price, r.r_status " +
                           "FROM tbl_request r " +
                           "INNER JOIN tbl_services s ON r.s_id = s.s_id " +
@@ -45,7 +41,6 @@ public class Customer {
         conf.viewRequest(viewQuery, requestHeaders, requestColumns);
     }
     
-    // Method to get service details
     private void getServiceDetails(int serviceId) {
         String query = "SELECT * FROM tbl_services WHERE s_id = " + serviceId;
         String[] headers = {"ID", "Service", "Description", "Price"};
@@ -59,10 +54,12 @@ public class Customer {
             System.out.println("\n===== CUSTOMER DASHBOARD =====");
             System.out.println("1. Request Errands");
             System.out.println("2. View My Errands");
-            System.out.println("3. Cancel Errands");
-            System.out.println("4. Logout");
+            System.out.println("3. Edit My Request");
+            System.out.println("4. Cancel Errands");
+            System.out.println("5. Logout");
             System.out.print("Enter Choice: ");
             int resp = sc.nextInt();
+            sc.nextLine(); // Consume newline
             
             switch(resp){
                 case 1:
@@ -71,19 +68,15 @@ public class Customer {
                     
                     System.out.print("\nEnter Service ID to Choose: ");
                     int servid = sc.nextInt();
+                    sc.nextLine(); // Consume newline
                     
-                    // Validate service ID
                     if(!isValidServiceId(servid)) {
                         System.out.println("Invalid Service ID. Please try again.");
                         break;
                     }
                     
-                    // Show selected service
                     System.out.println("\nSelected Service:");
                     getServiceDetails(servid);
-                    
-                    // Get additional details for the errand request
-                    sc.nextLine(); // Consume newline
                     
                     System.out.print("\nEnter Errand Description/Details: ");
                     String errandDetails = sc.nextLine();
@@ -97,7 +90,6 @@ public class Customer {
                     System.out.print("Enter Pickup/Service Location: ");
                     String location = sc.nextLine();
                     
-                    // Confirm the request
                     System.out.println("\n=== CONFIRM YOUR REQUEST ===");
                     System.out.println("Customer ID: " + loggedInUserId);
                     System.out.println("Service ID: " + servid);
@@ -106,13 +98,11 @@ public class Customer {
                     System.out.println("Time: " + preferredTime);
                     System.out.println("Location: " + location);
                     System.out.print("\nConfirm Request? (Y/N): ");
-                    String confirm = sc.next();
+                    String confirm = sc.nextLine();
                     
                     if(confirm.equalsIgnoreCase("Y")) {
-                        // Insert into tbl_request with all details
                         String insertQuery = "INSERT INTO tbl_request (u_id, s_id, r_details, r_date, r_time, r_location, r_status) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                        
-                        int requestId = conf.addRecordAndReturnId(insertQuery, loggedInUserId,servid,errandDetails,preferredDate,preferredTime,location,"Pending");
+                        int requestId = conf.addRecordAndReturnId(insertQuery, loggedInUserId, servid, errandDetails, preferredDate, preferredTime, location, "Pending");
                         
                         if(requestId > 0) {
                             System.out.println("\n✓ Errand Request Submitted Successfully!");
@@ -127,28 +117,170 @@ public class Customer {
                     break;
                     
                 case 2:
-                    viewRequest(); // Now properly calls the viewRequest method
+                    viewRequest();
                     break;
                     
                 case 3:
+                    System.out.println("\n=== EDIT MY REQUEST ===");
+                    // Show only pending requests that can be edited
+                    String editViewQuery = "SELECT r.r_id, s.s_services, r.r_details, r.r_date, r.r_time, r.r_location, s.s_price, r.r_status " +
+                                          "FROM tbl_request r " +
+                                          "INNER JOIN tbl_services s ON r.s_id = s.s_id " +
+                                          "WHERE r.u_id = " + loggedInUserId + " AND r.r_status = 'Pending'";
+                    String[] editHeaders = {"Request ID", "Service", "Details", "Date", "Time", "Location", "Price", "Status"};
+                    String[] editColumns = {"r_id", "s_services", "r_details", "r_date", "r_time", "r_location", "s_price", "r_status"};
+                    conf.viewRequest(editViewQuery, editHeaders, editColumns);
+                    
+                    System.out.print("\nEnter Request ID to Edit (0 to go back): ");
+                    int editRequestId = sc.nextInt();
+                    sc.nextLine(); // Consume newline
+                    
+                    if(editRequestId == 0) {
+                        System.out.println("Cancelled.");
+                        break;
+                    }
+                    
+                    // Verify the request belongs to this user and is pending
+                    String verifyEditQuery = "SELECT * FROM tbl_request WHERE r_id = ? AND u_id = ? AND r_status = 'Pending'";
+                    java.util.List<java.util.Map<String, Object>> verifyEditResult = conf.fetchRecords(verifyEditQuery, editRequestId, loggedInUserId);
+                    
+                    if(verifyEditResult.isEmpty()) {
+                        System.out.println("Invalid Request ID or you cannot edit this request.");
+                        break;
+                    }
+                    
+                    // Get current request details
+                    java.util.Map<String, Object> currentRequest = verifyEditResult.get(0);
+                    String currentDetails = currentRequest.get("r_details").toString();
+                    String currentDate = currentRequest.get("r_date").toString();
+                    String currentTime = currentRequest.get("r_time").toString();
+                    String currentLocation = currentRequest.get("r_location").toString();
+                    int currentServiceId = Integer.parseInt(currentRequest.get("s_id").toString());
+                    
+                    System.out.println("\n=== CURRENT REQUEST DETAILS ===");
+                    System.out.println("Service ID: " + currentServiceId);
+                    System.out.println("Details: " + currentDetails);
+                    System.out.println("Date: " + currentDate);
+                    System.out.println("Time: " + currentTime);
+                    System.out.println("Location: " + currentLocation);
+                    
+                    System.out.println("\n=== WHAT TO EDIT? ===");
+                    System.out.println("1. Service");
+                    System.out.println("2. Details");
+                    System.out.println("3. Date");
+                    System.out.println("4. Time");
+                    System.out.println("5. Location");
+                    System.out.println("6. Edit All");
+                    System.out.println("7. Cancel Edit");
+                    System.out.print("Enter Choice: ");
+                    int editChoice = sc.nextInt();
+                    sc.nextLine(); // Consume newline
+                    
+                    String newDetails = currentDetails;
+                    String newDate = currentDate;
+                    String newTime = currentTime;
+                    String newLocation = currentLocation;
+                    int newServiceId = currentServiceId;
+                    
+                    switch(editChoice) {
+                        case 1:
+                            viewServices();
+                            System.out.print("Enter New Service ID: ");
+                            newServiceId = sc.nextInt();
+                            sc.nextLine();
+                            if(!isValidServiceId(newServiceId)) {
+                                System.out.println("Invalid Service ID. Edit cancelled.");
+                                break;
+                            }
+                            break;
+                            
+                        case 2:
+                            System.out.print("Enter New Details: ");
+                            newDetails = sc.nextLine();
+                            break;
+                            
+                        case 3:
+                            System.out.print("Enter New Date (YYYY-MM-DD): ");
+                            newDate = sc.nextLine();
+                            break;
+                            
+                        case 4:
+                            System.out.print("Enter New Time (HH:MM AM/PM): ");
+                            newTime = sc.nextLine();
+                            break;
+                            
+                        case 5:
+                            System.out.print("Enter New Location: ");
+                            newLocation = sc.nextLine();
+                            break;
+                            
+                        case 6:
+                            viewServices();
+                            System.out.print("Enter New Service ID: ");
+                            newServiceId = sc.nextInt();
+                            sc.nextLine();
+                            if(!isValidServiceId(newServiceId)) {
+                                System.out.println("Invalid Service ID. Edit cancelled.");
+                                break;
+                            }
+                            System.out.print("Enter New Details: ");
+                            newDetails = sc.nextLine();
+                            System.out.print("Enter New Date (YYYY-MM-DD): ");
+                            newDate = sc.nextLine();
+                            System.out.print("Enter New Time (HH:MM AM/PM): ");
+                            newTime = sc.nextLine();
+                            System.out.print("Enter New Location: ");
+                            newLocation = sc.nextLine();
+                            break;
+                            
+                        case 7:
+                            System.out.println("Edit cancelled.");
+                            break;
+                            
+                        default:
+                            System.out.println("Invalid choice. Edit cancelled.");
+                            break;
+                    }
+                    
+                    if(editChoice >= 1 && editChoice <= 6) {
+                        System.out.println("\n=== CONFIRM CHANGES ===");
+                        System.out.println("Service ID: " + newServiceId);
+                        System.out.println("Details: " + newDetails);
+                        System.out.println("Date: " + newDate);
+                        System.out.println("Time: " + newTime);
+                        System.out.println("Location: " + newLocation);
+                        System.out.print("\nSave Changes? (Y/N): ");
+                        String saveConfirm = sc.nextLine();
+                        
+                        if(saveConfirm.equalsIgnoreCase("Y")) {
+                            String updateQuery = "UPDATE tbl_request SET s_id = ?, r_details = ?, r_date = ?, r_time = ?, r_location = ? WHERE r_id = ? AND u_id = ?";
+                            conf.updateRequest(updateQuery, newServiceId, newDetails, newDate, newTime, newLocation, editRequestId, loggedInUserId);
+                            System.out.println("✓ Request updated successfully!");
+                        } else {
+                            System.out.println("Changes discarded.");
+                        }
+                    }
+                    break;
+                    
+                case 4:
                     System.out.println("\n=== CANCEL ERRANDS ===");
-                    // Show only user's pending requests with details
                     String cancelViewQuery = "SELECT r.r_id, s.s_services, r.r_details, r.r_date, r.r_time, r.r_location, r.r_status " +
                                             "FROM tbl_request r " +
                                             "INNER JOIN tbl_services s ON r.s_id = s.s_id " +
                                             "WHERE r.u_id = " + loggedInUserId + " AND r.r_status = 'Pending'";
                     String[] cancelHeaders = {"Request ID", "Service", "Details", "Date", "Time", "Location", "Status"};
                     String[] cancelColumns = {"r_id", "s_services", "r_details", "r_date", "r_time", "r_location", "r_status"};
-                    conf.cancelRequest(cancelViewQuery, cancelHeaders, cancelColumns);
+                    conf.viewRequest(cancelViewQuery, cancelHeaders, cancelColumns);
                     
                     System.out.print("\nEnter Request ID to Cancel (0 to go back): ");
                     int requestId = sc.nextInt();
+                    sc.nextLine(); // Consume newline
                     
                     if(requestId == 0) {
+                        System.out.println("Cancelled.");
                         break;
                     }
                     
-                    // Verify the request belongs to this user
                     String verifyQuery = "SELECT * FROM tbl_request WHERE r_id = ? AND u_id = ? AND r_status = 'Pending'";
                     java.util.List<java.util.Map<String, Object>> verifyResult = conf.fetchRecords(verifyQuery, requestId, loggedInUserId);
                     
@@ -158,24 +290,25 @@ public class Customer {
                     }
                     
                     System.out.print("Are you sure you want to cancel this request? (Y/N): ");
-                    String cancelConfirm = sc.next();
+                    String cancelConfirm = sc.nextLine();
                     
                     if(cancelConfirm.equalsIgnoreCase("Y")) {
-                        String updateQuery = "UPDATE tbl_request SET r_status = 'Cancelled' WHERE r_id = ? AND u_id = ?";
-                        conf.updateRequest(updateQuery, requestId, loggedInUserId);
+                        String updateQuery = "UPDATE tbl_request SET r_status = ? WHERE r_id = ? AND u_id = ?";
+                        conf.updateRequest(updateQuery, "Cancelled", requestId, loggedInUserId);
                         System.out.println("✓ Request cancelled successfully!");
                     } else {
                         System.out.println("Cancellation aborted.");
                     }
                     break;
                     
-                case 4:
+                case 5:
                     System.out.println("Logging out...");
                     customerRunning = false;
                     break;
                     
                 default:
                     System.out.println("Invalid Choice.");
+                    break;
             }
         }
     }
