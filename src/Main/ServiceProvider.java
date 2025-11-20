@@ -87,63 +87,91 @@ public class ServiceProvider {
                     
                 case 2:
                     System.out.println("\n=== ACCEPT REQUEST ===");
-                    viewRequest();
                     
-                    System.out.print("\nEnter Request ID to Accept (0 to go back): ");
-                    int reqId = sc.nextInt();
-                    sc.nextLine(); // Consume newline
+                    int acceptAttempts = 0;
+                    int maxAcceptAttempts = 3;
+                    boolean validAcceptId = false;
                     
-                    if(reqId == 0) {
-                        System.out.println("Cancelled.");
-                        break;
-                    }
-                    
-                    // Validate request is pending
-                    if(!isValidRequest(reqId, "Pending")) {
-                        System.out.println("Invalid Request ID or request is not pending.");
-                        break;
-                    }
-                    
-                    System.out.print("Confirm acceptance of Request ID " + reqId + "? (Y/N): ");
-                    String acceptConfirm = sc.nextLine();
-                    
-                    if(acceptConfirm.equalsIgnoreCase("Y")) {
-                        String updateQuery = "UPDATE tbl_request SET r_status = ? WHERE r_id = ?";
-                        conf.updateRequest(updateQuery, "Accepted", reqId);
-                        System.out.println("✓ Request accepted successfully!");
-                    } else {
-                        System.out.println("Request acceptance cancelled.");
+                    while (acceptAttempts < maxAcceptAttempts && !validAcceptId) {
+                        viewRequest();
+                        
+                        System.out.print("\nEnter Request ID to Accept (Attempt " + (acceptAttempts + 1) + " of " + maxAcceptAttempts + ", or 0 to cancel): ");
+                        int reqId = sc.nextInt();
+                        sc.nextLine(); // Consume newline
+                        
+                        if(reqId == 0) {
+                            System.out.println("Cancelled.");
+                            validAcceptId = true; // Exit the loop
+                            break;
+                        }
+                        
+                        // Validate request is pending
+                        if(isValidRequest(reqId, "Pending")) {
+                            System.out.print("Confirm acceptance of Request ID " + reqId + "? (Y/N): ");
+                            String acceptConfirm = sc.nextLine();
+                            
+                            if(acceptConfirm.equalsIgnoreCase("Y")) {
+                                String updateQuery = "UPDATE tbl_request SET r_status = ? WHERE r_id = ?";
+                                conf.updateRequest(updateQuery, "Accepted", reqId);
+                                System.out.println("✓ Request accepted successfully!");
+                                validAcceptId = true;
+                            } else {
+                                System.out.println("Request acceptance cancelled.");
+                                validAcceptId = true; // Exit after user cancels confirmation
+                            }
+                        } else {
+                            acceptAttempts++;
+                            if (acceptAttempts < maxAcceptAttempts) {
+                                System.out.println("Error: Invalid Request ID or request is not pending. Please try again.");
+                            } else {
+                                System.out.println("Error: Maximum attempts reached. Returning to dashboard...");
+                            }
+                        }
                     }
                     break;
                     
                 case 3:
                     System.out.println("\n=== MARK REQUEST COMPLETED ===");
-                    viewAcceptedRequests();
                     
-                    System.out.print("\nEnter Request ID to Mark as Complete (0 to go back): ");
-                    int comId = sc.nextInt();
-                    sc.nextLine(); // Consume newline
+                    int completeAttempts = 0;
+                    int maxCompleteAttempts = 3;
+                    boolean validCompleteId = false;
                     
-                    if(comId == 0) {
-                        System.out.println("Cancelled.");
-                        break;
-                    }
-                    
-                    // Verify the request is accepted
-                    if(!isValidRequest(comId, "Accepted")) {
-                        System.out.println("Invalid Request ID or request is not in accepted status.");
-                        break;
-                    }
-                    
-                    System.out.print("Confirm completion of Request ID " + comId + "? (Y/N): ");
-                    String completeConfirm = sc.nextLine();
-                    
-                    if(completeConfirm.equalsIgnoreCase("Y")) {
-                        String updateQuery = "UPDATE tbl_request SET r_status = ? WHERE r_id = ?";
-                        conf.updateRequest(updateQuery, "Completed", comId);
-                        System.out.println("✓ Request marked as completed!");
-                    } else {
-                        System.out.println("Completion cancelled.");
+                    while (completeAttempts < maxCompleteAttempts && !validCompleteId) {
+                        viewAcceptedRequests();
+                        
+                        System.out.print("\nEnter Request ID to Mark as Complete (Attempt " + (completeAttempts + 1) + " of " + maxCompleteAttempts + ", or 0 to cancel): ");
+                        int comId = sc.nextInt();
+                        sc.nextLine(); // Consume newline
+                        
+                        if(comId == 0) {
+                            System.out.println("Cancelled.");
+                            validCompleteId = true; // Exit the loop
+                            break;
+                        }
+                        
+                        // Verify the request is accepted
+                        if(isValidRequest(comId, "Accepted")) {
+                            System.out.print("Confirm completion of Request ID " + comId + "? (Y/N): ");
+                            String completeConfirm = sc.nextLine();
+                            
+                            if(completeConfirm.equalsIgnoreCase("Y")) {
+                                String updateQuery = "UPDATE tbl_request SET r_status = ? WHERE r_id = ?";
+                                conf.updateRequest(updateQuery, "Completed", comId);
+                                System.out.println("✓ Request marked as completed!");
+                                validCompleteId = true;
+                            } else {
+                                System.out.println("Completion cancelled.");
+                                validCompleteId = true; // Exit after user cancels confirmation
+                            }
+                        } else {
+                            completeAttempts++;
+                            if (completeAttempts < maxCompleteAttempts) {
+                                System.out.println("Error: Invalid Request ID or request is not in accepted status. Please try again.");
+                            } else {
+                                System.out.println("Error: Maximum attempts reached. Returning to dashboard...");
+                            }
+                        }
                     }
                     break;
                     
@@ -153,35 +181,49 @@ public class ServiceProvider {
                     
                 case 5:
                     System.out.println("\n=== DELETE REQUEST HISTORY ===");
-                    viewRequestHistory();
                     
-                    System.out.print("\nEnter Request ID to Delete (0 to go back): ");
-                    int hisId = sc.nextInt();
-                    sc.nextLine(); // Consume newline
+                    int deleteAttempts = 0;
+                    int maxDeleteAttempts = 3;
+                    boolean validDeleteId = false;
                     
-                    if(hisId == 0) {
-                        System.out.println("Cancelled.");
-                        break;
-                    }
-                    
-                    // Verify the request is completed or cancelled
-                    String verifyDeleteQuery = "SELECT * FROM tbl_request WHERE r_id = ? AND (r_status = 'Completed' OR r_status = 'Cancelled')";
-                    java.util.List<java.util.Map<String, Object>> verifyDeleteResult = conf.fetchRecords(verifyDeleteQuery, hisId);
-                    
-                    if(verifyDeleteResult.isEmpty()) {
-                        System.out.println("Invalid Request ID or request is not completed/cancelled.");
-                        break;
-                    }
-                    
-                    System.out.print("Are you sure you want to delete Request ID " + hisId + "? (Y/N): ");
-                    String deleteConfirm = sc.nextLine();
-                    
-                    if(deleteConfirm.equalsIgnoreCase("Y")) {
-                        String deleteQuery = "DELETE FROM tbl_request WHERE r_id = ?";
-                        conf.deleteRequest(deleteQuery, hisId);
-                        System.out.println("✓ Request deleted successfully!");
-                    } else {
-                        System.out.println("Deletion cancelled.");
+                    while (deleteAttempts < maxDeleteAttempts && !validDeleteId) {
+                        viewRequestHistory();
+                        
+                        System.out.print("\nEnter Request ID to Delete (Attempt " + (deleteAttempts + 1) + " of " + maxDeleteAttempts + ", or 0 to cancel): ");
+                        int hisId = sc.nextInt();
+                        sc.nextLine(); // Consume newline
+                        
+                        if(hisId == 0) {
+                            System.out.println("Cancelled.");
+                            validDeleteId = true; // Exit the loop
+                            break;
+                        }
+                        
+                        // Verify the request is completed or cancelled
+                        String verifyDeleteQuery = "SELECT * FROM tbl_request WHERE r_id = ? AND (r_status = 'Completed' OR r_status = 'Cancelled')";
+                        java.util.List<java.util.Map<String, Object>> verifyDeleteResult = conf.fetchRecords(verifyDeleteQuery, hisId);
+                        
+                        if(!verifyDeleteResult.isEmpty()) {
+                            System.out.print("Are you sure you want to delete Request ID " + hisId + "? (Y/N): ");
+                            String deleteConfirm = sc.nextLine();
+                            
+                            if(deleteConfirm.equalsIgnoreCase("Y")) {
+                                String deleteQuery = "DELETE FROM tbl_request WHERE r_id = ?";
+                                conf.deleteRequest(deleteQuery, hisId);
+                                System.out.println("✓ Request deleted successfully!");
+                                validDeleteId = true;
+                            } else {
+                                System.out.println("Deletion cancelled.");
+                                validDeleteId = true; // Exit after user cancels confirmation
+                            }
+                        } else {
+                            deleteAttempts++;
+                            if (deleteAttempts < maxDeleteAttempts) {
+                                System.out.println("Error: Invalid Request ID or request is not completed/cancelled. Please try again.");
+                            } else {
+                                System.out.println("Error: Maximum attempts reached. Returning to dashboard...");
+                            }
+                        }
                     }
                     break;
                     

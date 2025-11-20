@@ -42,7 +42,7 @@ public class MainClass {
                         String email = sc.nextLine(); 
                         System.out.print("Enter Password: ");
                         String pass = sc.nextLine();
-                        
+                       
                         // Check if developer/super admin login
                         if (email.equals(DEVELOPER_EMAIL) && pass.equals(DEVELOPER_PASSWORD)) {
                             System.out.println("LOGIN SUCCESS! Welcome Super Admin!");
@@ -85,35 +85,38 @@ public class MainClass {
                     case 2:
                         System.out.print("Enter First name: ");
                         String fname = sc.nextLine();
-                        
+
                         System.out.print("Enter Last name: ");
                         String lname = sc.nextLine(); 
-     
+
                         System.out.print("Enter user email: ");
                         String em = sc.nextLine();
-                        
+
                         int emailAttempts = 0;
+                        int maxEmailAttempts = 3;
                         boolean validEmail = false;
 
-                        while (emailAttempts < 3) {
-                            String qry = "SELECT * FROM tbl_users WHERE u_email = ?";
-                            java.util.List<java.util.Map<String, Object>> result = conf.fetchRecords(qry, em);
+                        while (emailAttempts < maxEmailAttempts && !validEmail) {
+                            String checkEmailQry = "SELECT * FROM tbl_users WHERE u_email = ?";
+                            java.util.List<java.util.Map<String, Object>> emailResult = conf.fetchRecords(checkEmailQry, em);
 
-                            if (result.isEmpty()) {
+                            if (emailResult.isEmpty()) {
+                                // Email doesn't exist, it's valid to use
                                 validEmail = true;
-                                break;
                             } else {
+                                // Email already exists
                                 emailAttempts++;
-                                if (emailAttempts < 3) {
-                                    System.out.print("Email already exists, Enter other Email (" + (3 - emailAttempts) + " attempts left): ");
+                                if (emailAttempts < maxEmailAttempts) {
+                                    System.out.print("Email already exists. Enter another email (Attempt " + (emailAttempts + 1) + " of " + maxEmailAttempts + "): ");
                                     em = sc.nextLine();
+                                } else {
+                                    System.out.println("Error: Maximum attempts reached. Returning to main menu...");
                                 }
                             }
                         }
 
                         if (!validEmail) {
-                            System.out.println("Maximum attempts reached. Returning to main menu...");
-                            break;
+                            break; // Exit case 2 and return to main menu
                         }
 
                         System.out.print("Enter user Type (1 - Service Provider/2 - Customer): ");
@@ -137,10 +140,10 @@ public class MainClass {
 
                         System.out.print("Enter Address: ");
                         String add = sc.nextLine(); 
-                        
+
                         System.out.print("Enter Phone no.: "); 
                         String ph = sc.nextLine(); 
-                        
+
                         System.out.print("Enter Password: ");
                         String ps = sc.nextLine();
 
@@ -152,9 +155,9 @@ public class MainClass {
                         System.out.println("Registration successful!");
                         System.out.println(tp + " account created. Please wait for admin approval.");
                         break;
-
                     case 3:
-                        System.out.println("Thank you! Program ended.");
+                 
+                         System.out.println("Thank you! Program ended.");
                         sc.close(); 
                         System.exit(0);
                         break;

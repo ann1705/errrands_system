@@ -1,4 +1,3 @@
-
 package Main;
 
 import Config.config;
@@ -29,6 +28,19 @@ public class Admin {
         conf.viewServices(Query, userHeaders, userColumns);
     }
     
+    public void viewRequest() {
+        System.out.println("\n=== ALL REQUESTS ( ADMIN VIEW) ===");
+        // Super Admin views ALL requests from ALL users
+        String viewQuery = "SELECT r.r_id, u.u_first_name, u.u_last_name, s.s_services, r.r_details, r.r_date, r.r_time, r.r_location, s.s_price, r.r_status " +
+                          "FROM tbl_request r " +
+                          "INNER JOIN tbl_services s ON r.s_id = s.s_id " +
+                          "INNER JOIN tbl_users u ON r.u_id = u.u_id " +
+                          "ORDER BY r.r_id DESC";
+        String[] requestHeaders = {"Request ID", "Customer First", "Customer Last", "Service", "Details", "Date", "Time", "Location", "Price", "Status"};
+        String[] requestColumns = {"r_id", "u_first_name", "u_last_name", "s_services", "r_details", "r_date", "r_time", "r_location", "s_price", "r_status"};
+        conf.viewRequest(viewQuery, requestHeaders, requestColumns);
+    }
+    
 
   public void Admin() {
       
@@ -50,13 +62,33 @@ public class Admin {
                 break;
 
             case 2:
+                // First, check if there are pending users
                 String pendingQuery = "SELECT * FROM tbl_users WHERE u_type IN ('Customer', 'Service Provider') AND u_status = 'Pending'";
                 String[] pendingHeaders = {"ID", "First Name","Last Name", "Email", "Type", "Status"};
                 String[] pendingColumns = {"u_id", "u_first_name","u_last_name", "u_email", "u_type", "u_status"};
+                
+                // Check if there are any pending users
+                java.util.List<java.util.Map<String, Object>> pendingUsers = conf.fetchRecords(pendingQuery);
+                
+                if(pendingUsers.isEmpty()){
+                    System.out.println("\n=== PENDING USERS FOR APPROVAL ===");
+                    System.out.println("No pending users to approve.");
+                    System.out.println("\nPress Enter to go back...");
+                    sc.nextLine(); // consume newline
+                    sc.nextLine(); // wait for user input
+                    break;
+                }
+                
+                System.out.println("\n=== PENDING USERS FOR APPROVAL ===");
                 conf.viewUsers(pendingQuery, pendingHeaders, pendingColumns);
 
-                System.out.print("Enter ID to Approve: ");
+                System.out.print("\nEnter ID to Approve (0 to go back): ");
                 int ids = sc.nextInt();
+                
+                if(ids == 0){
+                    System.out.println("Returning to menu...");
+                    break;
+                }
 
                 String checkQry2 = "SELECT u_type FROM tbl_users WHERE u_id = ?";
                 java.util.List<java.util.Map<String, Object>> checkResult2 = conf.fetchRecords(checkQry2, ids);
@@ -73,7 +105,10 @@ public class Admin {
                 } else {
                     System.out.println("User ID not found!");
                 }
-                viewServices();
+                
+                // Show updated user list
+                System.out.println("\n=== UPDATED USER LIST ===");
+                viewUsers();
                 break;
 
             case 3:
@@ -81,8 +116,8 @@ public class Admin {
                 break;
                 
             case 4:
-                System.out.println("View all Request");
-                
+                viewRequest();
+                break;
 
             case 5:
                 System.out.println("Logging out...");

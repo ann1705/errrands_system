@@ -69,20 +69,29 @@ public class SuperAdmin {
                     System.out.print("Enter Admin Last Name: ");
                     String adminLname = sc.nextLine();
    
-                    System.out.print("Enter Admin email: ");
+                    System.out.print("Enter Admin Email: ");
                     String adminEmail = sc.nextLine();
                     
-                    // Check if email exists
                     String checkQry = "SELECT * FROM tbl_users WHERE u_email = ?";
                     java.util.List<java.util.Map<String, Object>> checkResult = conf.fetchRecords(checkQry, adminEmail);
+                    
+                    System.out.print("Enter Admin Phone Number: ");
+                    String adminPhone = sc.nextLine();
+                    
+                    System.out.print("Enter Admin Address: ");
+                    String adminAddress = sc.nextLine();
+                    
+                    // Check if email exists
+                   // String checkQry = "SELECT * FROM tbl_users WHERE u_email = ?";
+                   // java.util.List<java.util.Map<String, Object>> checkResult = conf.fetchRecords(checkQry, adminEmail);
                     
                     if(checkResult.isEmpty()) {
                         System.out.print("Enter Admin Password: ");
                         String adminPass = sc.nextLine();
                         String hashpass = conf.hashPassword(adminPass);
                         
-                        String adminSQL = "INSERT INTO tbl_users(u_first_name,u_last_name, u_email, u_type, u_status, u_pass) VALUES (?, ?, ?, ?, ?,?)";
-                        conf.addRecord(adminSQL, adminFname, adminLname, adminEmail, "Admin", "Approved", hashpass);
+                        String adminSQL = "INSERT INTO tbl_users(u_first_name, u_last_name, u_email, u_phone, u_address, u_type, u_status, u_pass) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                        conf.addRecord(adminSQL, adminFname, adminLname, adminEmail, adminPhone, adminAddress, "Admin", "Approved", hashpass);
                         System.out.println("Admin account created successfully!");
                     } else {
                         System.out.println("Email already exists!");
@@ -90,13 +99,35 @@ public class SuperAdmin {
                     break;
                     
                 case 2:
-                    viewUsers();
-                    System.out.print("Enter ID to Approve: ");
-                    int approveId = sc.nextInt();
+                    int attempts = 0;
+                    int maxAttempts = 3;
+                    boolean validId = false;
                     
-                    String approveSql = "UPDATE tbl_users SET u_status = ? WHERE u_id = ?";
-                    conf.updateUsers(approveSql, "Approved", approveId);
-                    System.out.println("User approved successfully!");
+                    while (attempts < maxAttempts && !validId) {
+                        viewUsers();
+                        System.out.print("Enter ID to Approve (Attempt " + (attempts + 1) + " of " + maxAttempts + "): ");
+                        int approveId = sc.nextInt();
+                        
+                        // Check if the ID exists
+                        String checkIdQry = "SELECT * FROM tbl_users WHERE u_id = ?";
+                        java.util.List<java.util.Map<String, Object>> idResult = conf.fetchRecords(checkIdQry, approveId);
+                        
+                        if (!idResult.isEmpty()) {
+                            // ID exists, proceed with approval
+                            String approveSql = "UPDATE tbl_users SET u_status = ? WHERE u_id = ?";
+                            conf.updateUsers(approveSql, "Approved", approveId);
+                            System.out.println("User approved successfully!");
+                            validId = true;
+                        } else {
+                            // ID doesn't exist
+                            attempts++;
+                            if (attempts < maxAttempts) {
+                                System.out.println("Error: User ID does not exist. Please try again.");
+                            } else {
+                                System.out.println("Error: Maximum attempts reached. Returning to dashboard...");
+                            }
+                        }
+                    }
                     break;
                     
                 case 3:
@@ -115,24 +146,47 @@ public class SuperAdmin {
                     break;
                     
                 case 4:
-                    viewServices();
+                    int serviceAttempts = 0;
+                    int maxServiceAttempts = 3;
+                    boolean validServiceId = false;
                     
-                    System.out.print("Enter Service ID to update: ");
-                    int id = sc.nextInt();
-                    sc.nextLine(); // consume newline
-                    
-                    System.out.print("Enter new Service Name: ");
-                    String nsname = sc.nextLine();
-                    
-                    System.out.print("Enter new Service Description: ");
-                    String ndesc = sc.nextLine();
-                    
-                    System.out.print("Enter new Price: ");
-                    String nprice = sc.nextLine();
-                   
-                    String qry = "UPDATE tbl_services SET s_services = ?, s_description = ?, s_price = ?  WHERE s_id = ?";
-                    conf.updateService(qry, nsname, ndesc, nprice, id);
-                    viewServices();
+                    while (serviceAttempts < maxServiceAttempts && !validServiceId) {
+                        viewServices();
+                        
+                        System.out.print("Enter Service ID to update (Attempt " + (serviceAttempts + 1) + " of " + maxServiceAttempts + "): ");
+                        int id = sc.nextInt();
+                        sc.nextLine(); // consume newline
+                        
+                        // Check if the Service ID exists
+                        String checkServiceQry = "SELECT * FROM tbl_services WHERE s_id = ?";
+                        java.util.List<java.util.Map<String, Object>> serviceResult = conf.fetchRecords(checkServiceQry, id);
+                        
+                        if (!serviceResult.isEmpty()) {
+                            // Service ID exists, proceed with update
+                            System.out.print("Enter new Service Name: ");
+                            String nsname = sc.nextLine();
+                            
+                            System.out.print("Enter new Service Description: ");
+                            String ndesc = sc.nextLine();
+                            
+                            System.out.print("Enter new Price: ");
+                            String nprice = sc.nextLine();
+                           
+                            String qry = "UPDATE tbl_services SET s_services = ?, s_description = ?, s_price = ?  WHERE s_id = ?";
+                            conf.updateService(qry, nsname, ndesc, nprice, id);
+                            viewServices();
+                            System.out.println("Service updated successfully!");
+                            validServiceId = true;
+                        } else {
+                            // Service ID doesn't exist
+                            serviceAttempts++;
+                            if (serviceAttempts < maxServiceAttempts) {
+                                System.out.println("Error: Service ID does not exist. Please try again.");
+                            } else {
+                                System.out.println("Error: Maximum attempts reached. Returning to dashboard...");
+                            }
+                        }
+                    }
                     break;
                     
                 case 5:
@@ -140,13 +194,36 @@ public class SuperAdmin {
                     break;
                     
                 case 6:
-                    viewServices();
-                    System.out.print("Enter the ID to Delete: ");
-                    id = sc.nextInt();
-
-                    String deleteqry = "DELETE FROM tbl_services WHERE s_id = ?";
-                    conf.deleteServices(deleteqry, id);
-                    viewServices();
+                    int deleteServiceAttempts = 0;
+                    int maxDeleteServiceAttempts = 3;
+                    boolean validDeleteServiceId = false;
+                    
+                    while (deleteServiceAttempts < maxDeleteServiceAttempts && !validDeleteServiceId) {
+                        viewServices();
+                        System.out.print("Enter the ID to Delete (Attempt " + (deleteServiceAttempts + 1) + " of " + maxDeleteServiceAttempts + "): ");
+                        int id = sc.nextInt();
+                        
+                        // Check if the Service ID exists
+                        String checkDeleteServiceQry = "SELECT * FROM tbl_services WHERE s_id = ?";
+                        java.util.List<java.util.Map<String, Object>> deleteServiceResult = conf.fetchRecords(checkDeleteServiceQry, id);
+                        
+                        if (!deleteServiceResult.isEmpty()) {
+                            // Service ID exists, proceed with deletion
+                            String deleteqry = "DELETE FROM tbl_services WHERE s_id = ?";
+                            conf.deleteServices(deleteqry, id);
+                            viewServices();
+                            System.out.println("Service deleted successfully!");
+                            validDeleteServiceId = true;
+                        } else {
+                            // Service ID doesn't exist
+                            deleteServiceAttempts++;
+                            if (deleteServiceAttempts < maxDeleteServiceAttempts) {
+                                System.out.println("Error: Service ID does not exist. Please try again.");
+                            } else {
+                                System.out.println("Error: Maximum attempts reached. Returning to dashboard...");
+                            }
+                        }
+                    }
                     break;
                     
                 case 7:
@@ -154,18 +231,40 @@ public class SuperAdmin {
                     break;
                     
                 case 8: 
-                    viewUsers();
-                    System.out.print("Enter User ID to Delete: ");
-                    int uId = sc.nextInt();
+                    int deleteUserAttempts = 0;
+                    int maxDeleteUserAttempts = 3;
+                    boolean validDeleteUserId = false;
                     
-                    String deleteSql = "DELETE FROM tbl_users WHERE u_id = ?";
-                    conf.deleteUsers(deleteSql, uId);
-                    System.out.println("User deleted successfully!");
+                    while (deleteUserAttempts < maxDeleteUserAttempts && !validDeleteUserId) {
+                        viewUsers();
+                        System.out.print("Enter User ID to Delete (Attempt " + (deleteUserAttempts + 1) + " of " + maxDeleteUserAttempts + "): ");
+                        int uId = sc.nextInt();
+                        
+                        // Check if the User ID exists
+                        String checkDeleteUserQry = "SELECT * FROM tbl_users WHERE u_id = ?";
+                        java.util.List<java.util.Map<String, Object>> deleteUserResult = conf.fetchRecords(checkDeleteUserQry, uId);
+                        
+                        if (!deleteUserResult.isEmpty()) {
+                            // User ID exists, proceed with deletion
+                            String deleteSql = "DELETE FROM tbl_users WHERE u_id = ?";
+                            conf.deleteUsers(deleteSql, uId);
+                            System.out.println("User deleted successfully!");
+                            validDeleteUserId = true;
+                        } else {
+                            // User ID doesn't exist
+                            deleteUserAttempts++;
+                            if (deleteUserAttempts < maxDeleteUserAttempts) {
+                                System.out.println("Error: User ID does not exist. Please try again.");
+                            } else {
+                                System.out.println("Error: Maximum attempts reached. Returning to dashboard...");
+                            }
+                        }
+                    }
                     break;
                     
                 case 9: 
                     viewRequest();
-                    break; // IMPORTANT: Added missing break
+                    break;
                     
                 case 10:
                     System.out.println("Logging out from Super Admin...");
